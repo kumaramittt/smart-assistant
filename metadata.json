@@ -1,0 +1,6 @@
+{
+  "name": "Smart Assistant",
+  "description": "An intelligent, accurate, and multilingual AI chat assistant with Google Search grounding.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
