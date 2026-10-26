@@ -5,6 +5,7 @@ import { ChatMessageItem } from './components/ChatMessageItem';
 import { EmptyState } from './components/EmptyState';
 import { ChatInput } from './components/ChatInput';
 import { SettingsModal, ThemeMode } from './components/SettingsModal';
+import { InstallPrompt } from './components/InstallPrompt';
 import { GoogleUser } from './components/GoogleAuth';
 import { ChatMessage, Conversation, SupportedLanguage } from './types';
 import { detectLanguage, formatGroundingSources } from './utils/chatUtils';
@@ -476,6 +477,9 @@ export default function App() {
         onClearAllConversations={handleClearAll}
         conversationCount={conversations.length}
       />
+
+      {/* PWA Install Prompt Banner */}
+      <InstallPrompt />
     </div>
   );
 }
