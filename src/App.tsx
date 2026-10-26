@@ -645,6 +645,7 @@ export default function App() {
           isLoading={isLoading}
           enableSearch={enableSearch}
           onToggleSearch={() => setEnableSearch(!enableSearch)}
+          languagePreference={currentLanguage}
         />
       </footer>
 
