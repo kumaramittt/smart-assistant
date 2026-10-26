@@ -1,15 +1,22 @@
 import React from 'react';
 import { Plus, Menu } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
+import { GoogleAuth, GoogleUser } from './GoogleAuth';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
   onNewChat: () => void;
+  user: GoogleUser | null;
+  onLogin: (user: GoogleUser) => void;
+  onLogout: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onToggleSidebar,
   onNewChat,
+  user,
+  onLogin,
+  onLogout,
 }) => {
   return (
     <header className="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 px-4 py-2.5 transition-colors duration-200">
@@ -36,8 +43,10 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Right: New Chat Button */}
+        {/* Right: Google Sign In & New Chat */}
         <div className="flex items-center gap-2">
+          <GoogleAuth user={user} onLogin={onLogin} onLogout={onLogout} />
+
           <button
             type="button"
             onClick={onNewChat}

@@ -5,13 +5,36 @@ import { ChatMessageItem } from './components/ChatMessageItem';
 import { EmptyState } from './components/EmptyState';
 import { ChatInput } from './components/ChatInput';
 import { SettingsModal, ThemeMode } from './components/SettingsModal';
+import { GoogleUser } from './components/GoogleAuth';
 import { ChatMessage, Conversation, SupportedLanguage } from './types';
 import { detectLanguage, formatGroundingSources } from './utils/chatUtils';
 
 const STORAGE_KEY = 'smart_assistant_conversations_v1';
 const THEME_KEY = 'smart_assistant_theme';
+const USER_STORAGE_KEY = 'smart_assistant_user_v1';
 
 export default function App() {
+  const [user, setUser] = useState<GoogleUser | null>(() => {
+    try {
+      const saved = localStorage.getItem(USER_STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return null;
+  });
+
+  const handleLogin = (newUser: GoogleUser) => {
+    setUser(newUser);
+    try {
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(newUser));
+    } catch {}
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    try {
+      localStorage.removeItem(USER_STORAGE_KEY);
+    } catch {}
+  };
   const [conversations, setConversations] = useState<Conversation[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -196,7 +219,26 @@ export default function App() {
       });
 
       if (!res.ok) {
-        throw new Error(`HTTP ${res.status}: Failed to reach Smart Assistant`);
+        let serverMsg = '';
+        try {
+          const errData = await res.json();
+          serverMsg = errData.error || errData.message || '';
+        } catch {
+          try {
+            const rawText = await res.text();
+            if (rawText && rawText.length < 200) {
+              serverMsg = rawText;
+            }
+          } catch {}
+        }
+        throw new Error(
+          `HTTP ${res.status}: ${
+            serverMsg ||
+            (res.status === 404
+              ? 'Endpoint /api/chat not found (Verify Vercel Serverless Function /api/chat.js & vercel.json)'
+              : 'Failed to reach Smart Assistant')
+          }`
+        );
       }
 
       const data = await res.json();
@@ -299,7 +341,19 @@ export default function App() {
       });
 
       if (!res.ok) {
-        throw new Error(`Failed to regenerate answer: HTTP ${res.status}`);
+        let serverMsg = '';
+        try {
+          const errData = await res.json();
+          serverMsg = errData.error || errData.message || '';
+        } catch {
+          try {
+            const rawText = await res.text();
+            if (rawText && rawText.length < 200) {
+              serverMsg = rawText;
+            }
+          } catch {}
+        }
+        throw new Error(`Failed to regenerate answer: HTTP ${res.status}${serverMsg ? `: ${serverMsg}` : ''}`);
       }
 
       const data = await res.json();
@@ -361,6 +415,9 @@ export default function App() {
       <Header
         onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         onNewChat={handleNewChat}
+        user={user}
+        onLogin={handleLogin}
+        onLogout={handleLogout}
       />
 
       {/* History Sidebar */}
