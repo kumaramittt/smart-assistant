@@ -19,8 +19,8 @@ export const Header: React.FC<HeaderProps> = ({
   onLogout,
 }) => {
   return (
-    <header className="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 px-4 py-2.5 transition-colors duration-200">
-      <div className="max-w-6xl mx-auto flex items-center justify-between gap-2">
+    <header className="sticky top-0 z-30 w-full max-w-full overflow-hidden bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 px-3 sm:px-4 py-2.5 transition-colors duration-200">
+      <div className="max-w-6xl mx-auto flex items-center justify-between gap-2 min-w-0">
         {/* Left: 'Three Line' Hamburger menu button & Brand */}
         <div className="flex items-center gap-2.5">
           <button

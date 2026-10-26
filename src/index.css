@@ -2,6 +2,17 @@
 @custom-variant dark (&:where(.dark, .dark *));
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
+/* Reset and box-sizing constraint to prevent page horizontal blowout */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 @layer base {
   body {
     font-family: 'Plus Jakarta Sans', 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -18,6 +29,7 @@
 
   code, pre {
     font-family: 'JetBrains Mono', monospace;
+    max-width: 100%;
   }
 }
 
@@ -49,9 +61,17 @@
 }
 
 /* Markdown styling inside assistant message */
+.prose-assistant {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .prose-assistant p {
   margin-bottom: 0.75rem;
   line-height: 1.625;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .prose-assistant p:last-child {
@@ -62,17 +82,20 @@
   list-style-type: disc;
   margin-left: 1.25rem;
   margin-bottom: 0.75rem;
+  overflow-wrap: anywhere;
 }
 
 .prose-assistant ol {
   list-style-type: decimal;
   margin-left: 1.25rem;
   margin-bottom: 0.75rem;
+  overflow-wrap: anywhere;
 }
 
 .prose-assistant li {
   margin-bottom: 0.25rem;
   line-height: 1.55;
+  overflow-wrap: anywhere;
 }
 
 .prose-assistant strong {
@@ -92,6 +115,7 @@
   color: #0f172a;
   margin-top: 1rem;
   margin-bottom: 0.5rem;
+  overflow-wrap: anywhere;
 }
 
 .dark .prose-assistant h1,
@@ -105,15 +129,19 @@
 .prose-assistant h2 { font-size: 1.15rem; }
 .prose-assistant h3 { font-size: 1.05rem; }
 
+/* Tables scroll inside their own box instead of widening the screen */
 .prose-assistant table {
+  display: block;
   width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
   border-collapse: collapse;
   margin-top: 0.75rem;
   margin-bottom: 0.75rem;
   font-size: 0.875rem;
   border-radius: 0.5rem;
-  overflow: hidden;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  -webkit-overflow-scrolling: touch;
 }
 
 .prose-assistant th,
@@ -121,6 +149,7 @@
   border: 1px solid #e2e8f0;
   padding: 0.5rem 0.75rem;
   text-align: left;
+  white-space: nowrap;
 }
 
 .dark .prose-assistant th,
@@ -154,6 +183,7 @@
   font-style: italic;
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
+  overflow-wrap: anywhere;
 }
 
 .dark .prose-assistant blockquote {
@@ -161,16 +191,19 @@
   color: #94a3b8;
 }
 
+/* Code blocks scroll horizontally within their container */
 .prose-assistant pre {
   background-color: #0f172a;
   color: #e2e8f0;
   padding: 0.875rem 1rem;
   border-radius: 0.625rem;
   overflow-x: auto;
+  max-width: 100%;
   font-size: 0.84rem;
   margin-top: 0.625rem;
   margin-bottom: 0.625rem;
   border: 1px solid #1e293b;
+  -webkit-overflow-scrolling: touch;
 }
 
 .dark .prose-assistant pre {
@@ -185,9 +218,19 @@
   border-radius: 0.25rem;
   font-size: 0.875em;
   font-weight: 500;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .dark .prose-assistant code:not(pre code) {
   background-color: #1e293b;
   color: #38bdf8;
+}
+
+/* Images always stay within bounds */
+.prose-assistant img {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 0.5rem;
 }

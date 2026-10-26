@@ -410,7 +410,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen h-[100dvh] overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-100 dark:selection:bg-blue-900 selection:text-blue-900 dark:selection:text-blue-100 transition-colors duration-200">
+    <div className="flex flex-col h-[100dvh] min-h-[100dvh] max-h-[100dvh] w-full max-w-full overflow-hidden overflow-x-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-100 dark:selection:bg-blue-900 selection:text-blue-900 dark:selection:text-blue-100 transition-colors duration-200">
       {/* Top Header */}
       <Header
         onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -435,12 +435,12 @@ export default function App() {
 
       {/* Main Chat Area: FIXED center on home page without vertical movement, scrollable when messages exist */}
       {messages.length === 0 ? (
-        <main className="flex-1 flex flex-col items-center justify-center overflow-hidden w-full max-w-4xl mx-auto px-4 select-none">
+        <main className="flex-1 flex flex-col items-center justify-center overflow-hidden overflow-x-hidden w-full max-w-4xl mx-auto px-3 sm:px-4 select-none">
           <EmptyState onSelectPrompt={handleSendMessage} />
         </main>
       ) : (
-        <main className="flex-1 overflow-y-auto w-full max-w-4xl mx-auto px-4 py-4 sm:py-6">
-          <div className="w-full space-y-4">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden w-full max-w-4xl mx-auto px-3 sm:px-4 py-3 sm:py-6">
+          <div className="w-full max-w-full space-y-4 overflow-hidden">
             {messages.map((msg) => (
               <ChatMessageItem
                 key={msg.id}
@@ -454,7 +454,7 @@ export default function App() {
       )}
 
       {/* Fixed Bottom Chat Input */}
-      <footer className="shrink-0 bg-slate-50 dark:bg-slate-950 pt-2 pb-1 z-20 transition-colors duration-200">
+      <footer className="shrink-0 w-full max-w-full overflow-x-hidden bg-slate-50 dark:bg-slate-950 pt-2 pb-1 z-20 transition-colors duration-200">
         <ChatInput
           onSendMessage={handleSendMessage}
           isLoading={isLoading}
