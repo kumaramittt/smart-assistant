@@ -185,15 +185,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 Box 3: Language Preference (भाषा)
               </span>
               <span className="text-[10px] text-slate-400 dark:text-neutral-500">
-                Matches your script
+                Auto-selects English
               </span>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               {[
-                { id: 'auto', label: 'Auto Detect', sub: 'ऑटो' },
-                { id: 'hinglish', label: 'Hinglish', sub: 'हिंग्लिश' },
-                { id: 'hindi', label: 'हिंदी (Hindi)', sub: 'देवनागरी' },
+                { id: 'auto', label: 'Auto (English)', sub: 'ऑटो (अंग्रेजी)' },
                 { id: 'english', label: 'English', sub: 'अंग्रेजी' },
+                { id: 'hindi', label: 'हिंदी (Hindi)', sub: 'देवनागरी' },
               ].map((opt) => {
                 const isSelected = languagePreference === opt.id;
                 return (
@@ -201,13 +200,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     key={opt.id}
                     type="button"
                     onClick={() => onLanguageChange(opt.id as SupportedLanguage)}
-                    className={`px-3 py-2 rounded-xl text-xs font-medium border text-left transition-all cursor-pointer ${
+                    className={`px-3 py-2.5 rounded-xl text-xs font-medium border text-left transition-all cursor-pointer ${
                       isSelected
-                        ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 font-semibold shadow-2xs'
+                        ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 font-semibold shadow-2xs ring-1 ring-blue-500/30'
                         : 'border-slate-200 dark:border-neutral-800 hover:bg-slate-100 dark:hover:bg-neutral-800 text-slate-700 dark:text-neutral-300'
                     }`}
                   >
-                    <span className="block truncate">{opt.label}</span>
+                    <div className="flex items-center justify-between">
+                      <span className="block truncate font-semibold">{opt.label}</span>
+                      {isSelected && <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />}
+                    </div>
                     <span className="text-[10px] text-slate-400 dark:text-neutral-500">{opt.sub}</span>
                   </button>
                 );

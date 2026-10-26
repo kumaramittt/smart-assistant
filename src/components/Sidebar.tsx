@@ -168,9 +168,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="p-2.5 rounded-lg bg-blue-50/80 dark:bg-blue-950/40 border border-blue-100/60 dark:border-blue-900/40 text-[11px] text-blue-900 dark:text-blue-300 flex items-start gap-2">
             <Globe2 className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold text-blue-950 dark:text-blue-200">Multilingual Fluency</p>
+              <p className="font-semibold text-blue-950 dark:text-blue-200">Language Support</p>
               <p className="text-blue-800/80 dark:text-blue-300/80 text-[10px] mt-0.5 leading-snug">
-                Ask in Hindi, English, or Hinglish. Smart Assistant matches your language & script.
+                Ask in English or Hindi. English is auto-selected by default.
               </p>
             </div>
           </div>

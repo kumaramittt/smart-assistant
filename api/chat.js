@@ -4,8 +4,10 @@
 const SMART_ASSISTANT_SYSTEM_PROMPT = `You are "Smart Assistant", an intelligent, accurate and helpful AI chat assistant like Gemini.
 
 ## Language
-- Understand every language, including Hindi (Devanagari), English, Hinglish (Hindi in Roman script), and mixed-language messages.
-- Always reply in the same language and script the user writes in. If the user writes Hinglish, reply in Hinglish. If Hindi, reply in Hindi. If English, reply in English.
+- Understand English and Hindi (Devanagari script).
+- The auto-selected default language is English. All messages in English or Roman script must be answered in natural, clear English.
+- Do NOT use Hinglish (Hindi written in Roman script).
+- Reply in Hindi only if the user writes in Hindi Devanagari script or explicitly asks for Hindi.
 - If the user asks for a different language, switch to it.
 
 ## Accuracy
@@ -102,18 +104,9 @@ async function callGeminiApi(model, apiKey, systemInstruction, contents, include
 
 // Fallback generator for quota exhaustion or offline states
 function generateIntelligentFallback(query, lang) {
-  if (lang === 'hinglish') {
-    return {
-      text: `Aapka sawal: "${query}".\n\nSmart Assistant aapki poori madad ke liye taiyaar hai! Main English, Hindi aur Hinglish tino bhashaon me factual aur accurate jawab deta hoon.\n\n### Direct Highlights:\n- Clear, direct, and factual answers.\n- Coding examples with syntax highlighting.\n- Step-by-step solutions for questions.`,
-      searchQueries: [],
-      groundingChunks: [],
-      grounded: false,
-    };
-  }
-
   if (lang === 'hindi') {
     return {
-      text: `आपके प्रश्न "${query}" का संक्षिप्त और स्पष्ट उत्तर नीचे दिया गया है।\n\n### मुख्य बिंदु:\n- सटीक और तथ्यात्मक जानकारी।\n- हिंदी, इंग्लिश और हिंग्लिश में त्वरित सहायता।\n- स्पष्ट चरणबद्ध समाधान।`,
+      text: `आपके प्रश्न "${query}" का संक्षिप्त और स्पष्ट उत्तर नीचे दिया गया है।\n\n### मुख्य बिंदु:\n- सटीक और तथ्यात्मक जानकारी।\n- हिंदी और इंग्लिश में त्वरित सहायता।\n- स्पष्ट चरणबद्ध समाधान।`,
       searchQueries: [],
       groundingChunks: [],
       grounded: false,
@@ -169,8 +162,8 @@ export default async function handler(req, res) {
 
     const lastUserMsg = messages[messages.length - 1]?.content || '';
     const hasDevanagari = /[\u0900-\u097F]/.test(lastUserMsg);
-    const isHinglish = /aaj|kya|hai|kaise|karo|batao|samjhao|yeh|woh|kitna|kuch|bhai/i.test(lastUserMsg);
-    const targetLang = hasDevanagari ? 'hindi' : isHinglish ? 'hinglish' : 'english';
+    // Auto-select language: English by default, or Hindi for Devanagari script (Hinglish removed)
+    const targetLang = hasDevanagari ? 'hindi' : 'english';
 
     // Format conversation history
     const contents = messages.map((m) => ({
@@ -181,7 +174,9 @@ export default async function handler(req, res) {
     // System instruction with user language preference
     let systemInstruction = SMART_ASSISTANT_SYSTEM_PROMPT;
     if (languagePreference && languagePreference !== 'auto') {
-      systemInstruction += `\n\nUser explicit language preference: Please respond primarily in ${languagePreference}.`;
+      systemInstruction += `\n\nUser explicit language preference: Please respond in ${languagePreference}.`;
+    } else {
+      systemInstruction += `\n\nAuto-selected language: ${targetLang}.`;
     }
 
     // Step A: Attempt Search Grounding if enabled

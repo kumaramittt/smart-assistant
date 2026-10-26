@@ -20,4 +20,4 @@ export interface Conversation {
   pinned?: boolean;
 }
 
-export type SupportedLanguage = 'auto' | 'english' | 'hindi' | 'hinglish';
+export type SupportedLanguage = 'auto' | 'english' | 'hindi';

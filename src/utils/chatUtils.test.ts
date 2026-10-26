@@ -13,17 +13,18 @@ test('detectLanguage correctly detects Hindi Devanagari', () => {
   assert.equal(detectLanguage('50,000 रुपये का ब्याज कितना होगा?'), 'hindi');
 });
 
-test('detectLanguage correctly detects Hinglish', () => {
-  assert.equal(detectLanguage('Aaj ka weather kaisa hai?'), 'hinglish');
-  assert.equal(detectLanguage('Mujhe Python me list comprehension samjhao bhai'), 'hinglish');
-  assert.equal(detectLanguage('Yeh code kaise kaam karta hai?'), 'hinglish');
-  assert.equal(detectLanguage('kya haal hai sab theek?'), 'hinglish');
-});
-
-test('detectLanguage falls back to English for standard English text', () => {
+test('detectLanguage auto-selects English for Roman script and English text (Hinglish removed)', () => {
   assert.equal(detectLanguage('What is the capital of France?'), 'english');
   assert.equal(detectLanguage('Explain quantum computing in simple terms.'), 'english');
   assert.equal(detectLanguage('Write a python function to sort a list.'), 'english');
+  // Romanized queries also resolve to English
+  assert.equal(detectLanguage('Aaj ka weather kaisa hai?'), 'english');
+  assert.equal(detectLanguage('Yeh code kaise kaam karta hai?'), 'english');
+});
+
+test('detectLanguage returns English for empty or whitespace string', () => {
+  assert.equal(detectLanguage(''), 'english');
+  assert.equal(detectLanguage('   '), 'english');
 });
 
 test('formatGroundingSources cleans URIs, extracts hostname and deduplicates', () => {

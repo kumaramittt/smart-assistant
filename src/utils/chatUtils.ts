@@ -10,17 +10,12 @@ export interface GroundingSource {
   faviconUrl: string;
 }
 
-export type DetectedLanguage = 'hindi' | 'hinglish' | 'english' | 'other';
-
-const HINGLISH_KEYWORDS = new Set([
-  'aaj', 'kya', 'hai', 'kaise', 'karo', 'batao', 'samjhao', 'mera', 'meri',
-  'hum', 'nahi', 'hota', 'karna', 'kripya', 'chahiye', 'kar', 'mein', 'pe',
-  'se', 'ko', 'yeh', 'woh', 'sab', 'kuch', 'kitna', 'kitne', 'kyun', 'kaha',
-  'kaun', 'acha', 'theek', 'thik', 'bhai', 'yaar', 'bolo', 'sunao', 'chal'
-]);
+export type DetectedLanguage = 'hindi' | 'english' | 'other';
 
 /**
- * Detect language heuristics for prompt guidance
+ * Detect language heuristics:
+ * Automatically selects 'english' by default, or 'hindi' if Hindi Devanagari script is present.
+ * Hinglish has been removed from the application.
  */
 export function detectLanguage(text: string): DetectedLanguage {
   if (!text || text.trim().length === 0) return 'english';
@@ -31,25 +26,7 @@ export function detectLanguage(text: string): DetectedLanguage {
     return 'hindi';
   }
 
-  // Tokenize roman words and check for common Hinglish words
-  const words = text
-    .toLowerCase()
-    .replace(/[^a-z\s]/g, ' ')
-    .split(/\s+/)
-    .filter(Boolean);
-
-  let hinglishCount = 0;
-  for (const word of words) {
-    if (HINGLISH_KEYWORDS.has(word)) {
-      hinglishCount++;
-    }
-  }
-
-  // If 2 or more Hinglish keywords or >20% of words are Hinglish
-  if (hinglishCount >= 2 || (words.length > 0 && hinglishCount / words.length >= 0.25)) {
-    return 'hinglish';
-  }
-
+  // Auto-selected default language is English
   return 'english';
 }
 
