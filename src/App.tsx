@@ -410,6 +410,152 @@ export default function App() {
     }
   };
 
+  // Handle editing a user message: updates message, deletes later messages, and requests fresh answer
+  const handleEditMessage = async (userMsgId: string, newContent: string) => {
+    if (!activeId || !currentConversation || isLoading) return;
+
+    const trimmed = newContent.trim();
+    if (!trimmed) return;
+
+    const msgIndex = currentConversation.messages.findIndex((m) => m.id === userMsgId);
+    if (msgIndex === -1) return;
+
+    const oldMsg = currentConversation.messages[msgIndex];
+    if (oldMsg.content.trim() === trimmed) return;
+
+    const detectedLang = detectLanguage(trimmed);
+    const editedUserMessage: ChatMessage = {
+      ...oldMsg,
+      content: trimmed,
+      timestamp: Date.now(),
+      language: detectedLang,
+    };
+
+    const assistantPlaceholderId = `msg-${Date.now() + 1}`;
+    const assistantPlaceholder: ChatMessage = {
+      id: assistantPlaceholderId,
+      role: 'assistant',
+      content: '',
+      timestamp: Date.now(),
+      isLoading: true,
+      language: detectedLang,
+    };
+
+    // Keep all messages up to the edited message, drop all subsequent messages, and add new assistant placeholder
+    const truncatedHistory = currentConversation.messages.slice(0, msgIndex);
+    const newMessages = [...truncatedHistory, editedUserMessage, assistantPlaceholder];
+
+    setConversations((prev) =>
+      prev.map((c) => {
+        if (c.id === activeId) {
+          return {
+            ...c,
+            title: msgIndex === 0 ? trimmed.slice(0, 35) + (trimmed.length > 35 ? '...' : '') : c.title,
+            updatedAt: Date.now(),
+            messages: newMessages,
+          };
+        }
+        return c;
+      })
+    );
+
+    setIsLoading(true);
+
+    try {
+      const historyToSend = [...truncatedHistory, editedUserMessage].map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: historyToSend,
+          enableSearch,
+          languagePreference: currentLanguage,
+        }),
+      });
+
+      if (!res.ok) {
+        let serverMsg = '';
+        try {
+          const errData = await res.json();
+          serverMsg = errData.error || errData.message || '';
+        } catch {
+          try {
+            const rawText = await res.text();
+            if (rawText && rawText.length < 200) serverMsg = rawText;
+          } catch {}
+        }
+        throw new Error(
+          `HTTP ${res.status}: ${
+            serverMsg ||
+            (res.status === 404
+              ? 'Endpoint /api/chat not found (Verify Vercel Serverless Function /api/chat.js & vercel.json)'
+              : 'Failed to reach Smart Assistant')
+          }`
+        );
+      }
+
+      const data = await res.json();
+      const cleanedSources = formatGroundingSources(data.groundingChunks || []);
+      const assistantText = data.text || 'Unable to generate response. Please try again.';
+
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id === activeId) {
+            return {
+              ...c,
+              updatedAt: Date.now(),
+              messages: c.messages.map((m) =>
+                m.id === assistantPlaceholderId
+                  ? {
+                      ...m,
+                      isLoading: false,
+                      content: assistantText,
+                      sources: cleanedSources,
+                      searchQueries: data.searchQueries || [],
+                      isGrounded: !!data.grounded,
+                      language: detectedLang,
+                    }
+                  : m
+              ),
+            };
+          }
+          return c;
+        })
+      );
+    } catch (err: any) {
+      console.error('Edit chat error:', err);
+      const errorMessage =
+        err.message || 'Smart Assistant could not complete the request. Please verify your connection.';
+
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id === activeId) {
+            return {
+              ...c,
+              updatedAt: Date.now(),
+              messages: c.messages.map((m) =>
+                m.id === assistantPlaceholderId
+                  ? {
+                      ...m,
+                      isLoading: false,
+                      content: `**Notice:** ${errorMessage}\n\nPlease try again or verify network settings.`,
+                    }
+                  : m
+              ),
+            };
+          }
+          return c;
+        })
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-[100dvh] min-h-[100dvh] max-h-[100dvh] w-full max-w-full overflow-hidden overflow-x-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-100 dark:selection:bg-blue-900 selection:text-blue-900 dark:selection:text-blue-100 transition-colors duration-200">
       {/* Top Header */}
@@ -436,7 +582,7 @@ export default function App() {
 
       {/* Main Chat Area: FIXED center on home page without vertical movement, scrollable when messages exist */}
       {messages.length === 0 ? (
-        <main className="flex-1 flex flex-col items-center justify-center overflow-hidden overflow-x-hidden w-full max-w-4xl mx-auto px-3 sm:px-4 select-none">
+        <main className="flex-1 flex flex-col items-center justify-center overflow-hidden overflow-x-hidden w-full max-w-4xl mx-auto px-3 sm:px-4">
           <EmptyState onSelectPrompt={handleSendMessage} />
         </main>
       ) : (
@@ -447,6 +593,8 @@ export default function App() {
                 key={msg.id}
                 message={msg}
                 onRegenerate={msg.role === 'assistant' ? handleRegenerate : undefined}
+                onEditMessage={msg.role === 'user' ? handleEditMessage : undefined}
+                isAiLoading={isLoading}
               />
             ))}
             <div ref={messagesEndRef} />
