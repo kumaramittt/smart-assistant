@@ -8,7 +8,9 @@ import {
   Trash2,
   Sparkles,
   ShieldCheck,
-  Check
+  Check,
+  Download,
+  FileText
 } from 'lucide-react';
 import { SupportedLanguage } from '../types';
 
@@ -25,6 +27,8 @@ interface SettingsModalProps {
   onLanguageChange: (lang: SupportedLanguage) => void;
   onClearAllConversations: () => void;
   conversationCount: number;
+  onExportConversation?: (format: 'markdown' | 'text') => void;
+  hasActiveConversation?: boolean;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -38,6 +42,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onLanguageChange,
   onClearAllConversations,
   conversationCount,
+  onExportConversation,
+  hasActiveConversation = false,
 }) => {
   const [confirmClear, setConfirmClear] = React.useState(false);
 
@@ -214,6 +220,46 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   </button>
                 );
               })}
+            </div>
+          </div>
+
+          {/* Export Current Conversation */}
+          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/70 dark:bg-neutral-900/50 border border-slate-200/70 dark:border-neutral-800/70 shadow-xs">
+            <div className="min-w-0 pr-2">
+              <span className="text-xs font-bold text-slate-800 dark:text-neutral-200 flex items-center gap-1.5">
+                <Download className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                <span>Export Active Chat</span>
+              </span>
+              <p className="text-[11px] text-slate-500 dark:text-neutral-400 mt-0.5">
+                {hasActiveConversation
+                  ? 'Download conversation to your device'
+                  : 'Start or select a chat to export'}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                disabled={!hasActiveConversation}
+                onClick={() => onExportConversation?.('markdown')}
+                aria-label="Export chat as Markdown"
+                title="Download Markdown (.md)"
+                className="px-2.5 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 shadow-xs"
+              >
+                <Download className="w-3 h-3" />
+                <span>.MD</span>
+              </button>
+              <button
+                type="button"
+                disabled={!hasActiveConversation}
+                onClick={() => onExportConversation?.('text')}
+                aria-label="Export chat as Plain Text"
+                title="Download Plain Text (.txt)"
+                className="px-2.5 py-1.5 text-xs bg-slate-200 dark:bg-neutral-800 hover:bg-slate-300 dark:hover:bg-neutral-700 text-slate-700 dark:text-neutral-200 rounded-xl font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+              >
+                <FileText className="w-3 h-3" />
+                <span>.TXT</span>
+              </button>
             </div>
           </div>
 

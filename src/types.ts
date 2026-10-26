@@ -9,6 +9,7 @@ export interface ChatMessage {
   searchQueries?: string[];
   language?: string;
   isLoading?: boolean;
+  images?: string[];
 }
 
 export interface Conversation {

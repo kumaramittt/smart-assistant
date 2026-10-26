@@ -7,7 +7,8 @@ import {
   Globe,
   Search,
   Sparkles,
-  RotateCcw
+  RotateCcw,
+  X
 } from 'lucide-react';
 import { ChatMessage } from '../types';
 import { formatTime, parseAnswerSections } from '../utils/chatUtils';
@@ -37,6 +38,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   const [speaking, setSpeaking] = useState(false);
   const [showAllSources, setShowAllSources] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [selectedModalImage, setSelectedModalImage] = useState<string | null>(null);
 
   const isUser = message.role === 'user';
 
@@ -70,6 +72,34 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   if (isUser) {
     return (
       <div className="flex flex-col items-end mb-4 group max-w-full overflow-hidden">
+        {/* Fullscreen Lightbox Image Modal */}
+        {selectedModalImage && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Enlarged image preview"
+            onClick={() => setSelectedModalImage(null)}
+            className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out animate-in fade-in duration-200"
+          >
+            <div className="relative max-w-4xl max-h-[90vh] flex flex-col items-center">
+              <button
+                type="button"
+                onClick={() => setSelectedModalImage(null)}
+                aria-label="Close image preview"
+                className="absolute -top-10 right-0 p-2 text-white/80 hover:text-white bg-slate-800/80 rounded-full transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <img
+                src={selectedModalImage}
+                alt="Enlarged preview"
+                className="max-h-[85vh] max-w-full object-contain rounded-2xl shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          </div>
+        )}
+
         {isEditing ? (
           <div className="w-full max-w-[95%] sm:max-w-[85%]">
             <EditableMessage
@@ -84,24 +114,50 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
           </div>
         ) : (
           <>
-            <div className="max-w-[88%] sm:max-w-[75%] rounded-2xl rounded-tr-xs bg-blue-600 dark:bg-blue-600 text-white px-4 py-3 shadow-xs [overflow-wrap:anywhere] [word-break:break-word] relative">
-              <p className="text-sm leading-relaxed whitespace-pre-wrap selectable-message-text [overflow-wrap:anywhere] [word-break:break-word]">
-                {message.content}
-              </p>
-              <div className="flex items-center justify-end gap-1.5 mt-1 text-[10px] text-blue-100 select-none">
-                <span>{formatTime(message.timestamp)}</span>
+            {/* Attached Images */}
+            {message.images && message.images.length > 0 && (
+              <div className="flex flex-wrap items-center justify-end gap-2 mb-2 max-w-[88%] sm:max-w-[75%]">
+                {message.images.map((imgUrl, index) => (
+                  <div
+                    key={index}
+                    onClick={() => setSelectedModalImage(imgUrl)}
+                    title="Click to enlarge image"
+                    className="relative rounded-2xl overflow-hidden border border-blue-400/40 shadow-md cursor-pointer group/img transition-transform hover:scale-[1.02] bg-slate-900"
+                  >
+                    <img
+                      src={imgUrl}
+                      alt={`Attached image ${index + 1}`}
+                      className="max-h-56 max-w-full sm:max-w-xs object-cover rounded-2xl"
+                    />
+                    <div className="absolute inset-0 bg-black/15 group-hover/img:bg-black/0 transition-colors pointer-events-none" />
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
+
+            {/* Message text bubble (if text is present) */}
+            {message.content && (
+              <div className="max-w-[88%] sm:max-w-[75%] rounded-2xl rounded-tr-xs bg-blue-600 dark:bg-blue-600 text-white px-4 py-3 shadow-xs [overflow-wrap:anywhere] [word-break:break-word] relative">
+                <p className="text-sm leading-relaxed whitespace-pre-wrap selectable-message-text [overflow-wrap:anywhere] [word-break:break-word]">
+                  {message.content}
+                </p>
+                <div className="flex items-center justify-end gap-1.5 mt-1 text-[10px] text-blue-100 select-none">
+                  <span>{formatTime(message.timestamp)}</span>
+                </div>
+              </div>
+            )}
 
             {/* User Message Action Toolbar: Copy & Edit */}
-            <div className="mt-1 flex items-center justify-end">
-              <MessageActions
-                content={message.content}
-                isUser={true}
-                onEdit={() => setIsEditing(true)}
-                canEdit={!isAiLoading}
-              />
-            </div>
+            {message.content && (
+              <div className="mt-1 flex items-center justify-end">
+                <MessageActions
+                  content={message.content}
+                  isUser={true}
+                  onEdit={() => setIsEditing(true)}
+                  canEdit={!isAiLoading}
+                />
+              </div>
+            )}
           </>
         )}
       </div>

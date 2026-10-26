@@ -165,11 +165,47 @@ export default async function handler(req, res) {
     // Auto-select language: English by default, or Hindi for Devanagari script (Hinglish removed)
     const targetLang = hasDevanagari ? 'hindi' : 'english';
 
-    // Format conversation history
-    const contents = messages.map((m) => ({
-      role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content }],
-    }));
+    // Format conversation history with multimodal image support
+    const contents = messages.map((m) => {
+      const parts = [];
+
+      // Support images attached to the message
+      if (m.images && Array.isArray(m.images)) {
+        for (const img of m.images) {
+          if (typeof img === 'string') {
+            const match = img.match(/^data:([^;]+);base64,(.+)$/);
+            if (match) {
+              parts.push({
+                inlineData: {
+                  mimeType: match[1],
+                  data: match[2],
+                },
+              });
+            } else if (img.length > 50) {
+              parts.push({
+                inlineData: {
+                  mimeType: 'image/jpeg',
+                  data: img,
+                },
+              });
+            }
+          }
+        }
+      }
+
+      if (m.content && m.content.trim().length > 0) {
+        parts.push({ text: m.content.trim() });
+      } else if (parts.length > 0) {
+        parts.push({ text: 'Please analyze and explain this image in detail.' });
+      } else {
+        parts.push({ text: '' });
+      }
+
+      return {
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts,
+      };
+    });
 
     // System instruction with user language preference
     let systemInstruction = SMART_ASSISTANT_SYSTEM_PROMPT;

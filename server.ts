@@ -12,7 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 app.use(express.json({ limit: '10mb' }));
 
@@ -25,9 +25,16 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Route /api/chat directly to the Vercel Serverless Function handler
+// Route /api/chat directly to the Vercel Serverless Function handler with error guard
 app.all('/api/chat', async (req, res) => {
-  return chatHandler(req, res);
+  try {
+    return await chatHandler(req, res);
+  } catch (err: any) {
+    console.error('Unhandled error in /api/chat handler:', err);
+    if (!res.headersSent) {
+      res.status(500).json({ error: err?.message || 'Internal server error in /api/chat' });
+    }
+  }
 });
 
 // Vite dev middleware or static serving
@@ -47,9 +54,18 @@ async function setupServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Smart Assistant server running on http://0.0.0.0:${PORT}`);
+  });
+
+  process.on('SIGTERM', () => {
+    server.close();
+  });
+  process.on('SIGINT', () => {
+    server.close();
   });
 }
 
-setupServer();
+setupServer().catch((err) => {
+  console.error('Failed to start server:', err);
+});

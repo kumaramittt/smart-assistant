@@ -9,6 +9,12 @@ import { InstallPrompt } from './components/InstallPrompt';
 import { GoogleUser } from './components/GoogleAuth';
 import { ChatMessage, Conversation, SupportedLanguage } from './types';
 import { detectLanguage, formatGroundingSources } from './utils/chatUtils';
+import {
+  formatConversationAsMarkdown,
+  formatConversationAsPlainText,
+  sanitizeFilename,
+  downloadFile,
+} from './utils/exportUtils';
 
 const STORAGE_KEY = 'smart_assistant_conversations_v1';
 const THEME_KEY = 'smart_assistant_theme';
@@ -137,9 +143,11 @@ export default function App() {
     setActiveId(null);
   };
 
-  // Send a user prompt
-  const handleSendMessage = async (userPrompt: string) => {
-    if (!userPrompt.trim()) return;
+  // Send a user prompt (with optional attached images)
+  const handleSendMessage = async (userPrompt: string, attachedImages?: string[]) => {
+    const hasText = userPrompt.trim().length > 0;
+    const hasImages = attachedImages && attachedImages.length > 0;
+    if (!hasText && !hasImages) return;
 
     let targetConvId = activeId;
     let isBrandNew = false;
@@ -156,6 +164,7 @@ export default function App() {
       content: userPrompt,
       timestamp: Date.now(),
       language: detectedLang,
+      images: hasImages ? attachedImages : undefined,
     };
 
     const assistantPlaceholderId = `msg-${Date.now() + 1}`;
@@ -168,10 +177,14 @@ export default function App() {
       language: detectedLang,
     };
 
+    const titleText = hasText
+      ? userPrompt.slice(0, 35) + (userPrompt.length > 35 ? '...' : '')
+      : 'Image Analysis';
+
     if (isBrandNew) {
       const newConv: Conversation = {
         id: targetConvId,
-        title: userPrompt.slice(0, 35) + (userPrompt.length > 35 ? '...' : ''),
+        title: titleText,
         messages: [userMessage, assistantPlaceholder],
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -185,9 +198,7 @@ export default function App() {
             const isFirst = c.messages.length === 0;
             return {
               ...c,
-              title: isFirst
-                ? userPrompt.slice(0, 35) + (userPrompt.length > 35 ? '...' : '')
-                : c.title,
+              title: isFirst ? titleText : c.title,
               updatedAt: Date.now(),
               messages: [...c.messages, userMessage, assistantPlaceholder],
             };
@@ -207,6 +218,7 @@ export default function App() {
       ).map((m) => ({
         role: m.role,
         content: m.content,
+        images: m.images,
       }));
 
       const res = await fetch('/api/chat', {
@@ -465,6 +477,7 @@ export default function App() {
       const historyToSend = [...truncatedHistory, editedUserMessage].map((m) => ({
         role: m.role,
         content: m.content,
+        images: m.images,
       }));
 
       const res = await fetch('/api/chat', {
@@ -556,15 +569,38 @@ export default function App() {
     }
   };
 
+  // Export current active conversation as plain text or markdown
+  const handleExportConversation = (format: 'markdown' | 'text' = 'markdown') => {
+    if (!currentConversation || currentConversation.messages.length === 0) {
+      return;
+    }
+
+    const cleanTitle = sanitizeFilename(currentConversation.title || 'chat');
+    const timestamp = new Date().toISOString().slice(0, 10);
+    const filename = `${cleanTitle}-${timestamp}.${format === 'markdown' ? 'md' : 'txt'}`;
+    const mimeType = format === 'markdown' ? 'text/markdown;charset=utf-8' : 'text/plain;charset=utf-8';
+
+    const content =
+      format === 'markdown'
+        ? formatConversationAsMarkdown(currentConversation)
+        : formatConversationAsPlainText(currentConversation);
+
+    downloadFile(content, filename, mimeType);
+  };
+
+  const hasMessagesToExport = messages.length > 0;
+
   return (
     <div className="flex flex-col h-[100dvh] min-h-[100dvh] max-h-[100dvh] w-full max-w-full overflow-hidden overflow-x-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-100 dark:selection:bg-blue-900 selection:text-blue-900 dark:selection:text-blue-100 transition-colors duration-200">
-      {/* Top Header */}
+      {/* Top Header with Export button */}
       <Header
         onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         onNewChat={handleNewChat}
         user={user}
         onLogin={handleLogin}
         onLogout={handleLogout}
+        onExport={() => handleExportConversation('markdown')}
+        canExport={hasMessagesToExport}
       />
 
       {/* History Sidebar */}
@@ -624,6 +660,8 @@ export default function App() {
         onLanguageChange={setCurrentLanguage}
         onClearAllConversations={handleClearAll}
         conversationCount={conversations.length}
+        onExportConversation={handleExportConversation}
+        hasActiveConversation={hasMessagesToExport}
       />
 
       {/* PWA Install Prompt Banner */}
